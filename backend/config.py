@@ -10,11 +10,11 @@ class Settings(BaseSettings):
     api_host: str = "0.0.0.0"
     api_port: int = 8000
     
-    # Google Gemini Settings
-    google_api_key: str = ""
+    # Groq Settings
+    groq_api_key: str = ""
     
     # Agent Settings
-    agent_model: str = "models/gemini-2.0-flash"
+    agent_model: str = "llama-3.3-70b-versatile"
     agent_temperature: float = 0.7
     
     # Data Settings

@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { analysisAPI, isBackendAvailable, checkBackendHealth } from '../services/api';
-import { Activity, Zap, Droplets, Users, TrendingDown, AlertTriangle, Wifi, WifiOff } from 'lucide-react';
+import { Activity, Zap, Droplets, Users, TrendingDown, AlertTriangle, Wifi, WifiOff, Clock, MessageCircle } from 'lucide-react';
 import BuildingCard from './BuildingCard';
 import RecommendationPanel from './RecommendationPanel';
+import ChatPanel from './ChatPanel';
 import './Dashboard.css';
 
 function Dashboard() {
@@ -10,6 +11,7 @@ function Dashboard() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [backendStatus, setBackendStatus] = useState('checking');
+  const [chatOpen, setChatOpen] = useState(false);
   
   // Agent execution parameters
   const [numRooms, setNumRooms] = useState(10);
@@ -28,12 +30,26 @@ function Dashboard() {
   const [computersOn, setComputersOn] = useState(5);
   const [timeOfDay, setTimeOfDay] = useState('afternoon');
   const [outdoorTemp, setOutdoorTemp] = useState(30);
+  const [loadingStartTime, setLoadingStartTime] = useState(null);
+  const [elapsedTime, setElapsedTime] = useState(0);
 
   useEffect(() => {
     checkBackend();
     // Only check backend status on mount, DO NOT run analysis automatically
     // Analysis only runs when user clicks "Run Analysis" button
   }, []);
+
+  // Timer effect for loading screen
+  useEffect(() => {
+    if (loading && loadingStartTime) {
+      const timer = setInterval(() => {
+        setElapsedTime(Math.floor((Date.now() - loadingStartTime) / 1000));
+      }, 1000);
+      return () => clearInterval(timer);
+    } else {
+      setElapsedTime(0);
+    }
+  }, [loading, loadingStartTime]);
 
   const checkBackend = async () => {
     const available = await checkBackendHealth();
@@ -42,7 +58,9 @@ function Dashboard() {
 
   const loadAnalysis = async () => {
     try {
+      setLoadingStartTime(Date.now());
       setLoading(true);
+      console.log('🔄 Starting analysis request...');
       
       // Pass parameters to backend
       const params = useCustomSettings ? {
@@ -61,12 +79,17 @@ function Dashboard() {
         outdoor_temperature: outdoorTemp
       } : {};
       
+      console.log('📤 Sending request to backend with params:', params);
+      const startTime = Date.now();
       const response = await analysisAPI.getCurrent(params);
+      const duration = ((Date.now() - startTime) / 1000).toFixed(1);
+      console.log(`✅ Analysis completed in ${duration}s`);
+      
       setAnalysis(response.data);
       setError(null);
     } catch (err) {
       setError('Failed to load campus analysis');
-      console.error(err);
+      console.error('❌ Analysis error:', err);
     } finally {
       setLoading(false);
     }
@@ -325,9 +348,23 @@ function Dashboard() {
   if (loading) {
     return (
       <div className="loading-container">
-        <Activity className="loading-icon" size={48} />
-        <h2>Agents Running...</h2>
-        <p>🤖 Room Agents → 🏢 Building Agents → 🌍 Campus Agent</p>
+        <Activity className="loading-icon spinning" size={64} />
+        <h2>AI Agents Processing...</h2>
+        <div className="loading-progress">
+          <p className="progress-step">🤖 Room Agents → 🏢 Building Agents → 🌍 Campus Agent</p>
+          <div className="timer-display">
+            <Clock size={20} />
+            <span>{elapsedTime}s elapsed</span>
+          </div>
+          <p className="progress-note">
+            {elapsedTime < 10 && '⏳ Loading Ollama model into memory...'}
+            {elapsedTime >= 10 && elapsedTime < 30 && '🧠 Analyzing rooms with AI...'}
+            {elapsedTime >= 30 && elapsedTime < 60 && '🏗️ Processing building data...'}
+            {elapsedTime >= 60 && elapsedTime < 120 && '🌍 Generating campus insights...'}
+            {elapsedTime >= 120 && '⏰ Large-scale analysis in progress...'}
+          </p>
+          <p className="progress-hint">No timeout • Waiting for backend completion • Using local mistral-small:24b</p>
+        </div>
       </div>
     );
   }
@@ -446,6 +483,22 @@ function Dashboard() {
             ))}
           </div>
         </section>
+      )}
+
+      {/* Chat Button */}
+      {analysis && !chatOpen && (
+        <button onClick={() => setChatOpen(true)} className="chat-fab">
+          <MessageCircle size={24} />
+        </button>
+      )}
+
+      {/* Chat Panel */}
+      {analysis && (
+        <ChatPanel
+          analysisData={analysis}
+          isOpen={chatOpen}
+          onClose={() => setChatOpen(false)}
+        />
       )}
     </div>
   );

@@ -8,7 +8,7 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 5000, // 5 second timeout
+  // No default timeout - set per request
 });
 
 let backendAvailable = true;
@@ -62,11 +62,24 @@ export const analysisAPI = {
       if (params.outdoor_temperature !== undefined) queryParams.append('outdoor_temperature', params.outdoor_temperature);
       
       const url = `/analysis/current${queryParams.toString() ? '?' + queryParams.toString() : ''}`;
-      const response = await api.get(url);
+      // No timeout when backend is available - let it take as long as needed
+      console.log('🚀 Requesting analysis from backend (no timeout - waiting for completion)...');
+      const response = await api.get(url, { timeout: 0 }); // 0 = no timeout
+      console.log('✅ Backend response received!');
       backendAvailable = true;
       return response;
     } catch (error) {
-      console.warn('Backend unavailable, using frontend simulation');
+      console.error('❌ Backend error:', error.message);
+      if (error.code === 'ECONNABORTED') {
+        console.warn('⏱️ Request timed out (this should not happen with timeout=0)');
+      }
+      if (error.code === 'ECONNREFUSED' || error.message.includes('Network Error')) {
+        console.warn('🔌 Backend not available, using frontend simulation');
+        backendAvailable = false;
+      } else {
+        console.error('❌ Unexpected error:', error);
+      }
+      console.warn('📊 Falling back to frontend simulation');
       backendAvailable = false;
       // Return mock data with environmental parameters
       return {
@@ -88,7 +101,8 @@ export const analysisAPI = {
 export const simulationAPI = {
   run: async (scenario) => {
     try {
-      return await api.post('/simulation/run', scenario);
+      // No timeout when backend is available - let it take as long as needed
+      return await api.post('/simulation/run', scenario, { timeout: 0 }); // 0 = no timeout
     } catch (error) {
       console.warn('Backend unavailable, using mock simulation');
       // Return mock simulation result

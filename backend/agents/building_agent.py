@@ -2,7 +2,7 @@
 from typing import Dict, List, Any
 from datetime import datetime
 
-from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_groq import ChatGroq
 from langchain_core.messages import HumanMessage
 
 from config import settings
@@ -22,10 +22,10 @@ class BuildingAgent:
     def __init__(self, building_id: str, building_config: Dict[str, Any]):
         self.building_id = building_id
         self.building_config = building_config
-        self.llm = ChatGoogleGenerativeAI(
+        self.llm = ChatGroq(
             model=settings.agent_model,
             temperature=settings.agent_temperature,
-            google_api_key=settings.google_api_key
+            api_key=settings.groq_api_key
         )
         self.room_agents = {}
     

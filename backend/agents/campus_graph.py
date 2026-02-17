@@ -3,7 +3,7 @@ from typing import Dict, List, Any
 import asyncio
 from datetime import datetime
 
-from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_groq import ChatGroq
 from langchain_core.messages import HumanMessage
 
 from .room_agent import RoomAgent, RoomState
@@ -33,10 +33,10 @@ class CampusAgentGraph:
     """
     
     def __init__(self):
-        self.llm = ChatGoogleGenerativeAI(
+        self.llm = ChatGroq(
             model=settings.agent_model,
             temperature=settings.agent_temperature,
-            google_api_key=settings.google_api_key
+            api_key=settings.groq_api_key
         )
         self.building_agents: Dict[str, BuildingAgent] = {}
         self.room_agents: Dict[str, RoomAgent] = {}
@@ -51,6 +51,14 @@ class CampusAgentGraph:
     
     def _ensure_agents_for_rooms(self, room_ids: List[str]):
         """Create agents only for the specified rooms and their buildings."""
+        print(f"🔍 DEBUG: Received {len(room_ids)} room_ids to analyze: {room_ids[:5]}...")
+        
+        # Clear old agents that are not needed for this analysis
+        rooms_to_keep = set(room_ids)
+        old_room_count = len(self.room_agents)
+        self.room_agents = {rid: agent for rid, agent in self.room_agents.items() if rid in rooms_to_keep}
+        print(f"🧹 Cleared {old_room_count - len(self.room_agents)} old room agents, kept {len(self.room_agents)}")
+        
         buildings_needed = set()
         
         # Create room agents if they don't exist
@@ -61,6 +69,18 @@ class CampusAgentGraph:
                     room_agent = RoomAgent(room_id, room_config)
                     self.room_agents[room_id] = room_agent
                     buildings_needed.add(room_config.get('building_id'))
+            else:
+                # Room agent already exists, add its building to needed set
+                room_config = self.campus_data.get('rooms', {}).get(room_id)
+                if room_config:
+                    buildings_needed.add(room_config.get('building_id'))
+        
+        print(f"🏢 DEBUG: Buildings needed: {buildings_needed}")
+        
+        # Clear old building agents and keep only needed ones
+        old_building_count = len(self.building_agents)
+        self.building_agents = {bid: agent for bid, agent in self.building_agents.items() if bid in buildings_needed}
+        print(f"🧹 Cleared {old_building_count - len(self.building_agents)} old building agents, kept {len(self.building_agents)}")
         
         # Create building agents if they don't exist
         for building_id in buildings_needed:
@@ -69,6 +89,7 @@ class CampusAgentGraph:
                 if building_config:
                     building_agent = BuildingAgent(building_id, building_config)
                     self.building_agents[building_id] = building_agent
+                    print(f"  ➕ Created building agent: {building_id}")
         
         # Register room agents to their buildings
         for room_id in room_ids:
@@ -314,7 +335,7 @@ Format: "CAMPUS POLICY: [action] (impact: [metric])"
         
         return recommendations[:7]
     
-    def run_what_if_simulation(
+    async def run_what_if_simulation(
         self, 
         scenario: Dict[str, Any], 
         current_data: Dict[str, Any],
@@ -352,10 +373,10 @@ Format: "CAMPUS POLICY: [action] (impact: [metric])"
         modified_data = self._apply_scenario(limited_data, scenario)
         
         # Run analysis on modified data
-        simulated_state = asyncio.run(self.run_campus_analysis(modified_data))
+        simulated_state = await self.run_campus_analysis(modified_data)
         
         # Compare with baseline
-        baseline_state = asyncio.run(self.run_campus_analysis(limited_data))
+        baseline_state = await self.run_campus_analysis(limited_data)
         
         comparison = self._compare_states(baseline_state, simulated_state)
         
@@ -420,11 +441,14 @@ Format: "CAMPUS POLICY: [action] (impact: [metric])"
             return limited
         
         rooms = limited.get('rooms', {})
+        print(f"🔍 DEBUG Budget: Starting with {len(rooms)} total rooms")
         
         # First, limit buildings if specified
         if num_buildings is not None:
             available_buildings = list(set(r.get('building_id') for r in rooms.values()))
+            print(f"🔍 DEBUG Budget: Available buildings: {available_buildings}")
             selected_buildings = available_buildings[:num_buildings]
+            print(f"🔍 DEBUG Budget: Selected {len(selected_buildings)} buildings: {selected_buildings}")
             
             # Filter rooms to only selected buildings
             rooms = {
@@ -432,6 +456,7 @@ Format: "CAMPUS POLICY: [action] (impact: [metric])"
                 for room_id, room_data in rooms.items()
                 if room_data.get('building_id') in selected_buildings
             }
+            print(f"🔍 DEBUG Budget: After building filter: {len(rooms)} rooms from {set(r.get('building_id') for r in rooms.values())}")
         
         # Then limit number of rooms if specified
         if num_rooms is not None and len(rooms) > num_rooms:
@@ -442,6 +467,7 @@ Format: "CAMPUS POLICY: [action] (impact: [metric])"
                 reverse=True
             )
             rooms = dict(sorted_rooms[:num_rooms])
+            print(f"🔍 DEBUG Budget: After room limit: {len(rooms)} rooms from {set(r.get('building_id') for r in rooms.values())}")
         
         limited['rooms'] = rooms
         
@@ -450,7 +476,8 @@ Format: "CAMPUS POLICY: [action] (impact: [metric])"
             limited['parameters'] = {}
         limited['parameters']['budget_level'] = budget_level
         
-        print(f"   Analyzing {len(rooms)} rooms across {len(set(r.get('building_id') for r in rooms.values()))} buildings")
+        final_buildings = set(r.get('building_id') for r in rooms.values())
+        print(f"   Analyzing {len(rooms)} rooms across {len(final_buildings)} buildings")
         
         return limited
     

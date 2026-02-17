@@ -1,6 +1,6 @@
 # 🌱 EcoAgent - AI-Powered Campus Sustainability System
 
-> An intelligent multi-agent system for real-time campus energy monitoring, analysis, and optimization using LangGraph and Google Gemini.
+> An intelligent multi-agent system for real-time campus energy monitoring, analysis, and optimization using LangGraph and Groq.
 
 [![Python](https://img.shields.io/badge/Python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.110+-green.svg)](https://fastapi.tiangolo.com/)
@@ -24,7 +24,7 @@
 
 ## 🎯 Overview
 
-EcoAgent is a sophisticated sustainability management system that leverages a hierarchical multi-agent architecture to monitor, analyze, and optimize energy consumption across educational campuses. The system uses AI agents powered by Google's Gemini LLM to provide intelligent recommendations for energy savings and resource optimization.
+EcoAgent is a sophisticated sustainability management system that leverages a hierarchical multi-agent architecture to monitor, analyze, and optimize energy consumption across educational campuses. The system uses AI agents powered by Groq's LLM to provide intelligent recommendations for energy savings and resource optimization.
 
 ### Why EcoAgent?
 
@@ -114,7 +114,7 @@ EcoAgent is a sophisticated sustainability management system that leverages a hi
 
 ### Backend
 - **Framework**: FastAPI (Python 3.11+)
-- **AI/ML**: LangChain, LangGraph, Google Gemini LLM
+- **AI/ML**: LangChain, LangGraph, Groq LLM
 - **State Management**: LangGraph StateGraph
 - **Async Processing**: asyncio, uvicorn
 
@@ -125,7 +125,7 @@ EcoAgent is a sophisticated sustainability management system that leverages a hi
 - **API Client**: Axios
 
 ### Key Libraries
-- `langchain-google-genai`: Google Gemini integration
+- `langchain-groq`: Groq API integration
 - `langgraph`: Agent state machine orchestration
 - `pydantic`: Data validation
 - `python-dotenv`: Environment configuration
@@ -135,7 +135,7 @@ EcoAgent is a sophisticated sustainability management system that leverages a hi
 ### Prerequisites
 - Python 3.11 or higher
 - Node.js 18+ and npm
-- Google Gemini API key ([Get one here](https://makersuite.google.com/app/apikey))
+- Groq API key ([Get one here](https://console.groq.com/keys))
 
 ### 1. Clone the Repository
 ```bash
@@ -177,12 +177,12 @@ npm install
 
 ### Backend Configuration (`backend/.env`)
 ```env
-# Google Gemini API Key (Required)
-GOOGLE_API_KEY=your_api_key_here
+# Groq API Key (Required)
+GROQ_API_KEY=your_api_key_here
 
 # Agent Model Configuration
-AGENT_MODEL=gemini-1.5-flash
-AGENT_TEMPERATURE=0.3
+AGENT_MODEL=llama-3.3-70b-versatile
+AGENT_TEMPERATURE=0.7
 
 # API Server Settings
 API_HOST=0.0.0.0
@@ -195,9 +195,9 @@ DEBUG=True
 ### Environment Variables
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `GOOGLE_API_KEY` | Your Google Gemini API key | *Required* |
-| `AGENT_MODEL` | Gemini model to use | `gemini-1.5-flash` |
-| `AGENT_TEMPERATURE` | LLM temperature (0-1) | `0.3` |
+| `GROQ_API_KEY` | Your Groq API key | *Required* |
+| `AGENT_MODEL` | Groq model to use | `llama-3.3-70b-versatile` |
+| `AGENT_TEMPERATURE` | LLM temperature (0-1) | `0.7` |
 | `API_HOST` | Backend server host | `0.0.0.0` |
 | `API_PORT` | Backend server port | `8000` |
 
@@ -418,7 +418,7 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 ## 🙏 Acknowledgments
 
 - Built with [LangChain](https://www.langchain.com/) and [LangGraph](https://github.com/langchain-ai/langgraph)
-- Powered by [Google Gemini](https://deepmind.google/technologies/gemini/)
+- Powered by [Groq](https://groq.com/)
 - UI inspired by modern sustainability dashboards
 
 ## 📞 Contact

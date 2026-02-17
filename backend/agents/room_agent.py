@@ -3,7 +3,7 @@ from typing import TypedDict, Annotated, Sequence, List, Dict, Any
 from datetime import datetime
 import operator
 
-from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_groq import ChatGroq
 from langchain_core.messages import BaseMessage, HumanMessage, AIMessage
 from langgraph.graph import StateGraph, END
 from langgraph.prebuilt import ToolNode
@@ -70,10 +70,10 @@ class RoomAgent:
         self.room_id = room_id
         self.room_config = room_config
         self.budget_level = 'medium'  # Default budget level
-        self.llm = ChatGoogleGenerativeAI(
+        self.llm = ChatGroq(
             model=settings.agent_model,
             temperature=settings.agent_temperature,
-            google_api_key=settings.google_api_key
+            api_key=settings.groq_api_key
         )
         self.graph = self._build_graph()
     
