@@ -2,14 +2,14 @@
 
 ## ⚠️ IMPORTANT: API Key Security
 
-### If You Cloned This Repository Before [Current Date]
+### If You Cloned This Repository Before February 17, 2026
 
 **Your API key may have been exposed in an earlier commit.**
 
 ### What to do:
 
-1. **Immediately regenerate your Google Gemini API key**
-   - Go to: https://makersuite.google.com/app/apikey
+1. **Immediately regenerate your Groq API key**
+   - Go to: https://console.groq.com/keys
    - Delete the old key
    - Create a new key
 
@@ -31,7 +31,7 @@
 
 2. Add your API key to `backend/.env`:
    ```env
-   GOOGLE_API_KEY=your_new_api_key_here
+   GROQ_API_KEY=your_new_api_key_here
    ```
 
 3. **Never commit the `.env` file!**
