@@ -158,9 +158,9 @@ function Dashboard() {
             <div className="controls-grid">
               <div className="control-item">
                 <label htmlFor="numRooms">
-                  Number of Rooms to Analyze
+                  Rooms per Building
                   <span className="control-hint">
-                    (Recommended: 5-20 for demos)
+                    (Recommended: 5-10 rooms per building)
                   </span>
                 </label>
                 <input
@@ -172,7 +172,9 @@ function Dashboard() {
                   onChange={(e) => setNumRooms(parseInt(e.target.value))}
                   className="slider"
                 />
-                <span className="value-display">{numRooms} rooms</span>
+                <span className="value-display">
+                  {numRooms} rooms × {numBuildings} building{numBuildings > 1 ? 's' : ''} = {numRooms * numBuildings} total
+                </span>
               </div>
 
               <div className="control-item">
